@@ -22,10 +22,32 @@ static FILE* db_file = NULL;
 
 // 初始化
 int kv_init(const char* filename) {
+    // 開啟檔案 a - append mode 會建立檔案 已經存在則接著寫入 , + 讀寫權限
     db_file = fopen(filename, "a+");
     if (!db_file) return -1;
 
-    // TODO: 讀取檔案並恢復資料，這裡先不做
+    // rewind 檔案指標，從頭讀
+    rewind(db_file);
+
+    char line[1024];
+    while (fgets(line, sizeof(line), db_file)) {
+        // 去掉換行符
+        line[strcspn(line, "\n")] = 0;
+
+        // 找 =
+        char* sep = strchr(line, '=');
+        if (!sep) continue;
+
+        *sep = '\0';
+        char* key = line;
+        char* value = sep + 1;
+
+        if (strlen(value) == 0) {
+            kv_delete(key);  // 刪除操作
+        } else {
+            kv_set(key, value);  // 一般 set 操作
+        }
+    }
 
     return 0;
 }
@@ -33,6 +55,7 @@ int kv_init(const char* filename) {
 void kv_close() {
     if (db_file) fclose(db_file);
 
+    // 釋放所有 KVPair 已分配的記憶體
     for (int i = 0; i < store_count; i++) {
         free(store[i].key);
         free(store[i].value);
@@ -43,8 +66,11 @@ void kv_close() {
 int kv_set(const char* key, const char* value) {
     // 先檢查是否已存在，更新值
     for (int i = 0; i < store_count; i++) {
+        // string compare 如果找到key
         if (strcmp(store[i].key, key) == 0) {
+            // 先釋放 value
             free(store[i].value);
+            // 把 value 複製進去
             store[i].value = strdup(value);
             return 0;
         }
@@ -53,6 +79,7 @@ int kv_set(const char* key, const char* value) {
     // 新增
     if (store_count >= MAX_STORE) return -1; // 容量滿
 
+    // 沒找到key 就儲存新的 key-value
     store[store_count].key = strdup(key);
     store[store_count].value = strdup(value);
     store_count++;
@@ -60,6 +87,7 @@ int kv_set(const char* key, const char* value) {
     // 寫入檔案 (append)
     if (db_file) {
         fprintf(db_file, "%s=%s\n", key, value);
+        // 直接寫入磁碟
         fflush(db_file);
     }
 
