@@ -1,0 +1,13 @@
+*.o          # object files
+*.a          # 靜態連結庫
+*.so         # shared objects / 動態連結庫 (Linux)
+*.exe        # Windows 可執行檔
+*.out        # 執行檔（有時 go build 預設輸出）
+*.test       # go test 產生的檔案（如果有）
+*.data
+# Go build cache 與 binaries（可選）
+/bin/
+/build/
+/dist/
+
+.DS_Store
