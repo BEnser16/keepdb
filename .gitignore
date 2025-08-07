@@ -1,4 +1,3 @@
-*.o          # object files
 *.a          # 靜態連結庫
 *.so         # shared objects / 動態連結庫 (Linux)
 *.exe        # Windows 可執行檔
@@ -9,5 +8,7 @@
 /bin/
 /build/
 /dist/
+
+/core/*.o
 
 .DS_Store
